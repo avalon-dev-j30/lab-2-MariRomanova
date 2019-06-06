@@ -4,9 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Класс описывает представление о коде товара и отражает соответствующую 
@@ -49,11 +47,11 @@ public class ProductCode {
         /*
          * TODO #05 реализуйте конструктор класса ProductCode
          */
-        while (set.next()) {
-            code = set.getString("prod_code");
-            discountCode = set.getString("discount_code").charAt(0);
-            description = set.getString("description");
-        }
+
+            this.code = set.getString("prod_code");
+            this.discountCode = set.getString("discount_code").charAt(0);
+            this.description = set.getString("description");
+
     }
     /**
      * Возвращает код товара
@@ -114,7 +112,7 @@ public class ProductCode {
         /*
          * TODO #06 Реализуйте метод hashCode
          */
-        return code.hashCode() + description.hashCode();
+        return code.hashCode();
     }
     /**
      * Сравнивает некоторый произвольный объект с текущим объектом типа 
@@ -129,10 +127,15 @@ public class ProductCode {
         /*
          * TODO #07 Реализуйте метод equals
          */
-        if (obj instanceof ProductCode) {
-            return code.equals(((ProductCode) obj).code);
+        if (!(obj instanceof ProductCode)) {
+            return false;
+        } else if (this == obj) {
+            return true;
+        } else {
+            ProductCode productCode = (ProductCode) obj;
+            return code.equals(productCode.code);
+
         }
-        return false;
     }
     /**
      * Возвращает строковое представление кода товара.
@@ -190,7 +193,7 @@ public class ProductCode {
         /*
          * TODO #11 Реализуйте метод getUpdateQuery
          */
-        String query = "UPDATE product_code set prod_code = ?, discount_code = ?,description = ? where prod_code = ?";
+        String query = "UPDATE product_code set discount_code = ?,description = ? where prod_code = ?";
         return connection.prepareStatement(query);
     }
     /**
@@ -205,7 +208,7 @@ public class ProductCode {
         /*
          * TODO #12 Реализуйте метод convert
          */
-        List<ProductCode> productList = new ArrayList<>();
+        Collection<ProductCode> productList = new ArrayList<>();
         while (set.next()) {
             productList.add(new ProductCode(set));
         }
@@ -227,15 +230,19 @@ public class ProductCode {
         Collection<ProductCode> products = all(connection);
         PreparedStatement statement;
         if (products.contains(this)) {
-            statement = getUpdateQuery(connection);
-            statement.setString(4, code);
+            PreparedStatement updateStatement = getUpdateQuery(connection);
+            updateStatement.setString(1, String.valueOf(discountCode));
+            updateStatement.setString(2, description);
+            updateStatement.setString(3, code);
+            updateStatement.executeUpdate();
         } else {
-            statement = getInsertQuery(connection);
+            PreparedStatement insertStatement = getInsertQuery(connection);
+            insertStatement.setString(1, code);
+            insertStatement.setString(2, String.valueOf(discountCode));
+            insertStatement.setString(3, description);
+            insertStatement.execute();
         }
-        statement.setString(1, code);
-        statement.setString(2, String.valueOf(discountCode));
-        statement.setString(3, description);
-        statement.execute();
+
     }
     /**
      * Возвращает все записи таблицы PRODUCT_CODE в виде коллекции объектов
